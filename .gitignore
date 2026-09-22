@@ -1,0 +1,21 @@
+# Python 執行期產物
+__pycache__/
+*.py[cod]
+
+# 虛擬環境（由 uv.lock 與 pyproject.toml 重建）
+.venv/
+.venv313/
+
+# 建置產物（由 WR503-GPST-Monitor.spec 重建）
+build/
+build313/
+dist/
+
+# MR Configurator2 開啟專案時產生的鎖定檔
+*.dup
+_dup
+
+# 執行期狀態資料庫
+*.sqlite3
+*.sqlite3-shm
+*.sqlite3-wal
