@@ -77,6 +77,8 @@ Replace the current workflow with two tabs. The Observation History tab configur
 
 ## Testing Decisions
 
+Note (2026-09-25): the `tests/` directory was removed from the repository during release preparation. The decisions below describe the test suite as designed; restore the suite from history before relying on them.
+
 - The primary seam is an application service exercised with a temporary SQLite database, a fake GPST source, and representative sensor frames. Tests assert externally observable history, alignment, selection, metrics, and export behavior rather than widget implementation.
 - Protocol packet and CRC tests already present remain as lower-level protection for the hardware boundary.
 - Database tests cover initialization, batch insertion, ordering, pagination, time filtering, mode filtering, and persistence across service instances.

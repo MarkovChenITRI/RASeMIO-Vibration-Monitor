@@ -1,15 +1,13 @@
 # Repository guidance
 
-## Agent skills
+## Issue tracker
 
-### Issue tracker
+Issues and specifications are tracked as local Markdown under `.scratch/<feature>/`. Each issue file states the outcome, the acceptance checks, and the triage role.
 
-Issues and specifications are tracked as local Markdown under `.scratch/<feature>/`. See `docs/agents/issue-tracker.md`.
+## Domain glossary
 
-### Triage labels
+This repository uses a single-context domain glossary. Read `CONTEXT.md` before changing domain behaviour, and use its canonical terms in code, tests, and specifications.
 
-Use the five default Matt Pocock triage roles. See `docs/agents/triage-labels.md`.
+## Local-only directories
 
-### Domain docs
-
-This repository uses a single-context domain glossary and root-level ADR directory. See `docs/agents/domain.md`.
+`docs/` and `driver/` are excluded from version control. They hold field documents and MR Configurator2 servo projects that exist only on the engineering machine.

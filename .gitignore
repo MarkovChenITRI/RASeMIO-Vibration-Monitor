@@ -11,6 +11,12 @@ build/
 build313/
 dist/
 
+# 開發文件與現場資料（只留本機）
+docs/
+
+# MR Configurator2 伺服專案（只留本機）
+driver/
+
 # MR Configurator2 開啟專案時產生的鎖定檔
 *.dup
 _dup
