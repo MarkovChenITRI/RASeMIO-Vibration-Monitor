@@ -11,6 +11,10 @@ build/
 build313/
 dist/
 
+# 沙箱測試的暫存區，只追蹤腳本
+sandbox-out/*
+!sandbox-out/smoke-test.ps1
+
 # 開發文件與現場資料（只留本機）
 docs/
 

@@ -2,9 +2,9 @@
   <Networking>Enable</Networking>
   <MappedFolders>
     <MappedFolder>
-      <HostFolder>C:\Users\User\Documents\GitHub\Clean-Robot-System\dist</HostFolder>
-      <SandboxFolder>C:\dist</SandboxFolder>
-      <ReadOnly>true</ReadOnly>
+      <HostFolder>C:\Users\User\Documents\GitHub\Clean-Robot-System\sandbox-out</HostFolder>
+      <SandboxFolder>C:\out</SandboxFolder>
+      <ReadOnly>false</ReadOnly>
     </MappedFolder>
     <MappedFolder>
       <HostFolder>C:\ITRI\歐陽\SAA\WR503\震動量測\20260827_vib test\濾波前\上手J5</HostFolder>
@@ -13,6 +13,6 @@
     </MappedFolder>
   </MappedFolders>
   <LogonCommand>
-    <Command>powershell -ExecutionPolicy Bypass -NoExit -Command "New-Item -ItemType Directory -Force C:\Users\WDAGUtilityAccount\Desktop\app | Out-Null; Copy-Item C:\dist\WR503-GPST-Monitor.exe,C:\dist\wr503_app_config.json C:\Users\WDAGUtilityAccount\Desktop\app -ErrorAction SilentlyContinue; Write-Host 'Python 是否存在:'; (Get-Command python -ErrorAction SilentlyContinue) -ne $null; Write-Host '測試檔案已放在桌面的 app 資料夾'"</Command>
+    <Command>powershell -ExecutionPolicy Bypass -NoExit -File C:\out\smoke-test.ps1</Command>
   </LogonCommand>
 </Configuration>

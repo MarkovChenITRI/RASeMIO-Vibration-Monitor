@@ -1,7 +1,7 @@
 """Two-tab WR503 status-history and vibration-analysis desktop app."""
 from __future__ import annotations
 
-import json, queue, sys, threading, time, tkinter as tk
+import json, os, queue, sqlite3, sys, threading, time, tkinter as tk
 import tkinter.font as tkfont
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -32,7 +32,37 @@ POLLING_INTERVAL_S = 0.2
 RETRY_INTERVAL_S = 10.0
 MAX_CONSECUTIVE_FAILURES = 5
 APP_DIR = Path(sys.executable).resolve().parent if getattr(sys, "frozen", False) else Path(__file__).resolve().parents[1]
-DB_PATH, CONFIG_PATH = APP_DIR / "wr503_status.sqlite3", APP_DIR / "wr503_app_config.json"
+
+
+def fallback_data_dir() -> Path:
+    """使用者的本機應用程式資料夾，永遠位於本機磁碟。不在此處建立資料夾，用到才建。"""
+    return Path(os.environ.get("LOCALAPPDATA") or Path.home()) / "WR503-GPST-Monitor"
+
+
+def open_store(preferred: Path) -> tuple[ObservationStore, Path]:
+    """優先在執行檔旁邊建資料庫。唯讀目錄、共享資料夾或網路磁碟會失敗，改用本機應用程式資料夾。
+
+    共享資料夾的寫入測試會通過，但 SQLite 仍可能回報 disk I/O error，所以判斷依據是實際開啟資料庫，
+    不是寫入測試。
+    """
+    candidates = [preferred / "wr503_status.sqlite3"]
+    fallback = fallback_data_dir() / "wr503_status.sqlite3"
+    if fallback != candidates[0]:
+        candidates.append(fallback)
+    last_error: Exception | None = None
+    for path in candidates:
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            return ObservationStore(path), path.parent
+        except (sqlite3.Error, OSError) as error:
+            last_error = error
+    raise last_error if last_error else RuntimeError("no database path available")
+
+
+BUNDLED_CONFIG_PATH = APP_DIR / "wr503_app_config.json"
+DATA_DIR = APP_DIR
+DB_PATH = APP_DIR / "wr503_status.sqlite3"
+CONFIG_PATH = APP_DIR / "wr503_app_config.json"
 
 
 def utc_text(value: datetime | None = None) -> str:
@@ -124,7 +154,10 @@ class App(tk.Tk):
         super().__init__(); self.title(APP_NAME); self.geometry("1000x680"); self.minsize(900, 620)
         self.protocol("WM_DELETE_WINDOW", self.close_app)
         self.events, self.stop_event = queue.Queue(), threading.Event(); self.worker = None
-        self.store = ObservationStore(DB_PATH); self.views = {}
+        global DATA_DIR, DB_PATH, CONFIG_PATH
+        self.store, DATA_DIR = open_store(APP_DIR)
+        DB_PATH, CONFIG_PATH = self.store.path, DATA_DIR / "wr503_app_config.json"
+        self.views = {}
         self.analysis_after_id = None
         self.page, self.page_size = 0, 100; self.config_data = self.load_config()
         style = ttk.Style(self); style.theme_use("vista" if "vista" in style.theme_names() else "clam")
@@ -134,8 +167,10 @@ class App(tk.Tk):
 
     def load_config(self):
         defaults = {"host":"192.168.10.11","port":4000,"threshold":.3,"cutoff":200,"target_hz":512,"debounce_samples":3}
-        try: return {**defaults, **json.loads(CONFIG_PATH.read_text(encoding="utf-8"))}
-        except Exception: return defaults
+        for path in (CONFIG_PATH, BUNDLED_CONFIG_PATH):
+            try: return {**defaults, **json.loads(path.read_text(encoding="utf-8"))}
+            except Exception: continue
+        return defaults
     def save_config(self):
         data = {"host":self.host.get(),"port":self.port.get(),"threshold":self.threshold.get(),"cutoff":self.cutoff.get(),"target_hz":self.target_hz.get(),"debounce_samples":self.debounce_samples.get()}
         try: CONFIG_PATH.write_text(json.dumps(data, indent=2), encoding="utf-8")
@@ -1038,5 +1073,20 @@ class App(tk.Tk):
     def close_app(self): self.stop_event.set(); self.save_config(); self.store.close(); self.destroy()
 
 
-def main(): App().mainloop()
+def main():
+    try:
+        app = App()
+    except (sqlite3.Error, OSError) as error:
+        root = tk.Tk(); root.withdraw()
+        messagebox.showerror(
+            APP_NAME,
+            f"無法建立或開啟觀測資料庫。\n\n原因：{error}\n\n"
+            f"已嘗試的位置：\n  {APP_DIR}\n  {fallback_data_dir()}\n\n"
+            "請把程式複製到本機磁碟的可寫資料夾再執行，例如桌面或文件資料夾。",
+        )
+        root.destroy()
+        return
+    app.mainloop()
+
+
 if __name__=="__main__":main()

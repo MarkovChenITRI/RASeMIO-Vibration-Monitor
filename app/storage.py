@@ -57,7 +57,11 @@ class ObservationStore:
     def __init__(self, path: Path) -> None:
         self.path = path
         self.connection = sqlite3.connect(path, timeout=10, check_same_thread=False)
-        self.connection.execute("PRAGMA journal_mode=WAL")
+        try:
+            self.connection.execute("PRAGMA journal_mode=WAL")
+        except sqlite3.Error:
+            # 共享資料夾與網路磁碟不支援 WAL 的共用記憶體，退回一般日誌模式。
+            self.connection.execute("PRAGMA journal_mode=DELETE")
         self.connection.execute(
             "CREATE TABLE IF NOT EXISTS observations ("
             "id INTEGER PRIMARY KEY AUTOINCREMENT, "
